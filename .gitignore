@@ -1,0 +1,27 @@
+# Generated JavaScript files (except for config files)
+lib/**/*.js
+bin/**/*.js
+!jest.config.js
+!frontend/**/*.js
+!frontend/**/*.d.ts
+
+# TypeScript declaration files for CDK
+*.d.ts
+!frontend/**/*.d.ts
+
+# Dependencies
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Leave out .env files
+.env
+.env.dev
+.env.demo
+.env.prod
+.env.localtest
+
+# Build artifacts
+frontend/dist
