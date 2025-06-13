@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Message {
-  id: string;
-  type: 'user' | 'bot';
+  id?: string;
+  messageId: string;
+  type?: 'user' | 'bot';
+  role?: 'user' | 'assistant';
   content: string;
+  chatId: string;
+  createdAt: string;
+  status: string;
 }
 
 export interface Session {
@@ -9,4 +15,5 @@ export interface Session {
   chatId: string;
   title: string;
   lastModified: string;
+  sessions: any[];
 } 
