@@ -8,16 +8,30 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
   const renderContent = () => {
     const content = message.content;
     const linkMatch = content.match(/If you want to know more about this topic, you can visit the following link: (.+)$/);
-    
+
     if (linkMatch) {
       const mainContent = content.replace(linkMatch[0], '').trim();
       const link = linkMatch[1];
-      
+
+      const contentId = extractContentIdFromLink(link);
+      const contentName = extractContentNameFromLink(link);
+
       return (
         <>
           <div>{mainContent}</div>
           <button
-            onClick={() => window.open(`/content/${link}`, '_blank')}
+            onClick={() => {
+              window.parent.postMessage(
+                {
+                  type: 'OPEN_MODAL_SUGGESTED_CONTENT',
+                  payload: {
+                    contentId,
+                    contentName,
+                  },
+                },
+                '*'
+              );
+            }}
             className="mt-2 px-4 py-2 text-white rounded"
             style={{ backgroundColor: '#4361ee' }}
           >
@@ -26,7 +40,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         </>
       );
     }
-    
+
     return content;
   };
 
@@ -41,4 +55,14 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       {renderContent()}
     </div>
   );
-}; 
+};
+
+function extractContentIdFromLink(link: string): string {
+  const match = link.match(/^(\d+)_/);
+  return match ? match[1] : '';
+}
+
+function extractContentNameFromLink(link: string): string {
+  const match = link.match(/^\d+_([\w\s-]+)\.mp4$/i);
+  return match ? match[1] : '';
+}
