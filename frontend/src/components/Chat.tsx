@@ -71,7 +71,8 @@ export default function Chat() {
     const handleMessage = (event: MessageEvent) => {
       if (
         event.origin === "http://localhost" ||
-        event.origin === "http://localhost:8000"
+        event.origin === "http://localhost:8000" ||
+        event.origin === import.meta.env.VITE_APP_URL
       ) {
         switch (event.data.type) {
           case "CLOSE_CHAT":
