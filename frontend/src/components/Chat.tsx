@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import type { Message, Session } from "../types/chat";
@@ -18,13 +19,14 @@ export default function Chat() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [csrfTokenReady, setCsrfTokenReady] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Inicializar Pusher cuando el componente se monta
+  // Initialize Pusher when the component mounts
   useEffect(() => {
     pusherService.init();
 
@@ -33,16 +35,14 @@ export default function Chat() {
     };
   }, []);
 
-  // Suscribirse al canal de Pusher cuando cambia el chatId
+  // Subscribe to Pusher channel when chatId changes
   useEffect(() => {
     if (currentChatId) {
       pusherService.subscribeToChat(currentChatId, (data: any) => {
-        console.log("Respuesta del chat recibida:", data);
-
-        // Remover indicador de escritura
+        // Remove loading indicator
         setLoading(false);
 
-        // Agregar mensaje del bot
+        // Add bot message
         const botMessage: Message = {
           id: Math.random().toString(36).substring(2, 9),
           role: "assistant",
@@ -65,29 +65,10 @@ export default function Chat() {
   }, [currentChatId]);
 
   useEffect(() => {
-    const initializeChat = async () => {
-      try {
-        await fetchSessions();
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    initializeChat();
-  }, []);
-
-  useEffect(() => {
     window.parent.postMessage({ type: "CHATBOT_READY" }, "*");
-    console.log("Solicitando CSRF token al padre...");
     window.parent.postMessage({ type: "REQUEST_CSRF_TOKEN" }, "*");
 
     const handleMessage = (event: MessageEvent) => {
-      console.log(
-        "Mensaje recibido en React:",
-        event.data,
-        "desde origen:",
-        event.origin
-      );
-
       if (
         event.origin === "http://localhost" ||
         event.origin === "http://localhost:8000"
@@ -102,13 +83,12 @@ export default function Chat() {
             break;
 
           case "CSRF_TOKEN":
-            console.log("CSRF token recibido:", event.data.token);
             localStorage.setItem("csrf_token", event.data.token);
+            setUserId(event.data.userId);
             setCsrfTokenReady(true);
             break;
 
           default:
-            console.log("Tipo de mensaje no reconocido:", event.data.type);
             break;
         }
       }
@@ -118,9 +98,22 @@ export default function Chat() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  const fetchSessions = async () => {
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        if (userId) {
+          await fetchSessions(userId);
+        }
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    initializeChat();
+  }, [userId]);
+
+  const fetchSessions = async (userId: string) => {
     try {
-      const sessions = await chatService.fetchSessions();
+      const sessions = await chatService.fetchSessions(userId);
       setSessions(sessions);
     } catch (error) {
       console.error("Failed to fetch sessions:", error);
@@ -135,14 +128,12 @@ export default function Chat() {
         return;
       }
 
-      console.log("Creando nueva sesión...");
       const response = await chatService.createNewSession();
-      console.log("Sesión creada:", response);
 
       setCurrentSessionId(response.sessionId);
       setCurrentChatId(response.chatId);
       setMessages([]);
-      await fetchSessions();
+      await fetchSessions(userId ?? "");
 
       return response;
     } catch (error) {
@@ -154,7 +145,6 @@ export default function Chat() {
   const loadSession = async (session: Session) => {
     try {
       setLoadingSession(true);
-      console.log("Cargando sesión:", session.sessionId);
 
       const messages = await chatService.loadSessionHistory(session.sessionId);
       setMessages(messages);
@@ -172,7 +162,6 @@ export default function Chat() {
     if (!input.trim()) return;
 
     const csrfToken = localStorage.getItem("csrf_token");
-    console.log("Token CSRF disponible:", csrfToken);
 
     if (!csrfToken) {
       console.error("No hay token CSRF disponible");
@@ -180,11 +169,11 @@ export default function Chat() {
       return;
     }
 
-    // Si no hay sesión actual, crear una nueva
+    // If there is no current session, create a new one
     if (!currentSessionId) {
       try {
         const newSession = await createNewSession();
-        setCurrentChatId(newSession.chatId);
+        setCurrentChatId(newSession?.chatId ?? "");
       } catch (error) {
         console.error("Error creando sesión antes de enviar mensaje:", error);
         return;
@@ -208,16 +197,14 @@ export default function Chat() {
     setInput("");
 
     try {
-      console.log("Enviando mensaje:", messageToSend);
       const response = await chatService.sendMessage(messageToSend);
-      console.log("Mensaje enviado, esperando respuesta via WebSocket...");
 
-      // Si hay un nuevo chatId en la respuesta, actualizar
+      // If there is a new chatId in the response, update it
       if (response.chatId && response.chatId !== currentChatId) {
         setCurrentChatId(response.chatId);
       }
 
-      // No agregamos el mensaje del bot aquí porque llegará via WebSocket
+      // We don't add the bot message here because it will come via WebSocket
     } catch (error) {
       console.error("Error enviando mensaje:", error);
       setLoading(false);
@@ -259,7 +246,6 @@ export default function Chat() {
           <button
             className="close-fab w-10 h-10 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-20 transition-colors"
             onClick={() => {
-              console.log("Cerrando chat...");
               window.parent.postMessage({ type: "CLOSE_CHAT" }, "*");
             }}
           >

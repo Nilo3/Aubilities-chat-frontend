@@ -4,8 +4,8 @@ import type { Message, Session } from '../types/chat';
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 export const chatService = {
-    async fetchSessions(): Promise<Session[]> {
-        const response = await fetch(`${API_URL}/chat/user-sessions`, {
+    async fetchSessions(userId: string): Promise<Session[]> {
+        const response = await fetch(`${API_URL}/chat/user-sessions?userId=${userId}`, {
             credentials: 'include',
             headers: {
                 'Accept': 'application/json',
@@ -41,9 +41,7 @@ export const chatService = {
           'X-CSRF-TOKEN': localStorage.getItem('csrf_token') ?? ''
         }
       });
-      
-      console.log(response, 'response');
-    
+          
       const data = await response.json();
       return data.messages;
     },
