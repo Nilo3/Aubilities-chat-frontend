@@ -8,7 +8,7 @@ ENV ?= dev
 .DEFAULT_GOAL := help
 
 # PHONY targets
-.PHONY: help build build-frontend build-cdk bootstrap synth deploy doctor diff clean
+.PHONY: help build build-frontend build-cdk bootstrap synth deploy doctor diff clean update-dns
 
 help: ## Show this help message
 	@echo "Usage: make [target] ENV=[dev|demo|prod]"
@@ -67,6 +67,12 @@ deploy: build ## Deploy CDK stack to specified environment
 	AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 	CERTIFICATE_ARN=$(CERTIFICATE_ARN) \
 	cdk deploy --context env=$(ENV) --require-approval never
+
+update-dns: ## Show DNS update instructions after deployment
+	@echo "Getting DNS update instructions for $(ENV) environment..."
+	@./scripts/update-dns.sh $(ENV)
+
+deploy-with-dns: deploy update-dns ## Deploy and show DNS update instructions
 
 doctor: ## Run CDK doctor for specified environment
 	@echo "Running CDK doctor for $(ENV) environment..."
