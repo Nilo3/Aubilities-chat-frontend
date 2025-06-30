@@ -16,7 +16,7 @@ export const chatService = {
         return data.sessions;
     },
 
-    async createNewSession(): Promise<{ chatId: string; sessionId: string }> {
+    async createNewSession(userId: string, title: string): Promise<{ chatId: string; sessionId: string }> {
         const response = await fetch(`${API_URL}/chat/sessions`, {
             method: 'POST',
             credentials: 'include',
@@ -26,8 +26,8 @@ export const chatService = {
                 'X-CSRF-TOKEN': localStorage.getItem('csrf_token') || ''
             },
             body: JSON.stringify({ 
-                title: 'New Chat',
-                userId: 'current-user'
+                title: title,
+                userId: userId
             })
         });
         return response.json();

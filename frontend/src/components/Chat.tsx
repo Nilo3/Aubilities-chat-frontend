@@ -67,13 +67,14 @@ export default function Chat() {
   useEffect(() => {
     window.parent.postMessage({ type: "CHATBOT_READY" }, "*");
     window.parent.postMessage({ type: "REQUEST_CSRF_TOKEN" }, "*");
-
+    
     const handleMessage = (event: MessageEvent) => {
-      if (
+      const isAcceptedOrigin =
         event.origin === "http://localhost" ||
         event.origin === "http://localhost:8000" ||
-        event.origin === import.meta.env.VITE_APP_URL
-      ) {
+        event.origin === "https://chat.dev.aubilities.com" ||
+        event.origin === "https://dev.aubilities.com";
+      if (isAcceptedOrigin) {
         switch (event.data.type) {
           case "CLOSE_CHAT":
             setMessages([]);
@@ -92,6 +93,8 @@ export default function Chat() {
           default:
             break;
         }
+      } else {
+        console.warn("[Chat] Origin no aceptado:", event.origin);
       }
     };
 
@@ -121,7 +124,7 @@ export default function Chat() {
     }
   };
 
-  const createNewSession = async () => {
+  const createNewSession = async (initialMessage: string) => {
     try {
       const csrfToken = localStorage.getItem("csrf_token");
       if (!csrfToken) {
@@ -129,7 +132,10 @@ export default function Chat() {
         return;
       }
 
-      const response = await chatService.createNewSession();
+      // Usar las primeras 10 letras del mensaje como título
+      const title = initialMessage.length > 0 ? initialMessage.substring(0, 10) : "";
+
+      const response = await chatService.createNewSession(userId ?? "", title);
 
       setCurrentSessionId(response.sessionId);
       setCurrentChatId(response.chatId);
@@ -173,7 +179,7 @@ export default function Chat() {
     // If there is no current session, create a new one
     if (!currentSessionId) {
       try {
-        const newSession = await createNewSession();
+        const newSession = await createNewSession(input);
         setCurrentChatId(newSession?.chatId ?? "");
       } catch (error) {
         console.error("Error creando sesión antes de enviar mensaje:", error);
@@ -258,7 +264,7 @@ export default function Chat() {
       <SessionList
         sessions={sessions}
         currentSessionId={currentSessionId}
-        onCreateNewSession={createNewSession}
+        onCreateNewSession={() => createNewSession(input)}
         onLoadSession={loadSession}
       />
 
