@@ -68,7 +68,6 @@ function extractContentNameFromLink(link: string): string {
   const match = safeLink.match(/\/\d+_([^\.]+)\.mp4/i);
   if (!match) return '';
   let name = decodeURIComponent(match[1]);
-  // Elimina el sufijo de idioma si existe (por ejemplo, _es, _en, _pt, etc.)
   name = name.replace(/_[a-z]{2}$/, '');
   return name;
 }
