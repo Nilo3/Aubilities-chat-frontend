@@ -286,11 +286,6 @@ export default function Chat() {
                 />
               ))}
             {loading && <TypingIndicator />}
-            {messages.length === 0 && !loading && (
-              <div className="h-full flex items-center justify-center text-gray-500">
-                <p>¡Hola! ¿En qué puedo ayudarte hoy?</p>
-              </div>
-            )}
           </>
         )}
         <div ref={chatEndRef} />
@@ -304,7 +299,7 @@ export default function Chat() {
           rows={1}
           className="flex-1 resize-none border border-gray-300 rounded px-3 py-4 text-sm focus:outline-none min-h-[40px] max-h-[120px] overflow-y-auto placeholder-gray-400 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder={
-            csrfTokenReady ? "Type a message..." : "Esperando conexión..."
+            csrfTokenReady ? "Type a message..." : "Waiting for connection..."
           }
           value={input}
           onChange={(e) => setInput(e.target.value)}

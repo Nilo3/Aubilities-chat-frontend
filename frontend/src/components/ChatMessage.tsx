@@ -35,7 +35,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             className="mt-2 px-4 py-2 text-white rounded"
             style={{ backgroundColor: '#4361ee' }}
           >
-            See suggested content
+            {contentName}
           </button>
         </>
       );
@@ -58,11 +58,17 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
 };
 
 function extractContentIdFromLink(link: string): string {
-  const match = link.match(/^(\d+)_/);
+  const safeLink = link.replace(/^http:\/\//, 'https://');
+  const match = safeLink.match(/\/(\d+)_/);
   return match ? match[1] : '';
 }
 
 function extractContentNameFromLink(link: string): string {
-  const match = link.match(/^\d+_([\w\s-]+)\.mp4$/i);
-  return match ? match[1] : '';
+  const safeLink = link.replace(/^http:\/\//, 'https://');
+  const match = safeLink.match(/\/\d+_([^\.]+)\.mp4/i);
+  if (!match) return '';
+  let name = decodeURIComponent(match[1]);
+  // Elimina el sufijo de idioma si existe (por ejemplo, _es, _en, _pt, etc.)
+  name = name.replace(/_[a-z]{2}$/, '');
+  return name;
 }
