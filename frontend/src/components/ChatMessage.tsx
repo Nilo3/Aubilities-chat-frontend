@@ -58,16 +58,19 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
 };
 
 function extractContentIdFromLink(link: string): string {
-  const safeLink = link.replace(/^http:\/\//, 'https://');
-  const match = safeLink.match(/\/(\d+)_/);
+  const match = link.match(/(\d+)_/);
   return match ? match[1] : '';
 }
 
 function extractContentNameFromLink(link: string): string {
   const safeLink = link.replace(/^http:\/\//, 'https://');
-  const match = safeLink.match(/\/\d+_([^\.]+)\.mp4/i);
+  const match = safeLink.match(/\/?([^\/]+)\.mp4$/i);
   if (!match) return '';
-  let name = decodeURIComponent(match[1]);
-  name = name.replace(/_[a-z]{2}$/, '');
-  return name;
+  let name = match[1];
+  name = name.replace(/^\d+_/, '');
+  name = name.replace(/_[a-z]{2}$/i, '');
+  name = name.replace(/_/g, ' ');
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+
+  return name.trim();
 }
