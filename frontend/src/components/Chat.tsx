@@ -129,12 +129,12 @@ export default function Chat() {
         return;
       }
 
-      const response = await chatService.createNewSession();
-
       const title =
         initialMessage.length > 0
           ? initialMessage.substring(0, 10) + "..."
           : "";
+
+      const response = await chatService.createNewSession(userId ?? "", title);
 
       setCurrentSessionId(response.sessionId);
       setCurrentChatId(response.chatId);
@@ -178,7 +178,7 @@ export default function Chat() {
     // If there is no current session, create a new one
     if (!currentSessionId) {
       try {
-        const newSession = await createNewSession();
+        const newSession = await createNewSession(input);
         setCurrentChatId(newSession?.chatId ?? "");
       } catch (error) {
         console.error("Error creando sesión antes de enviar mensaje:", error);
@@ -263,7 +263,7 @@ export default function Chat() {
       <SessionList
         sessions={sessions}
         currentSessionId={currentSessionId}
-        onCreateNewSession={createNewSession}
+        onCreateNewSession={() => createNewSession(input)}
         onLoadSession={loadSession}
       />
 
@@ -303,7 +303,7 @@ export default function Chat() {
           rows={1}
           className="flex-1 resize-none border border-gray-300 rounded px-3 py-4 text-sm focus:outline-none min-h-[40px] max-h-[120px] overflow-y-auto placeholder-gray-400 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder={
-            csrfTokenReady ? "Type a message..." : "Esperando conexión..."
+            csrfTokenReady ? "Type a message..." : "Waiting for connection..."
           }
           value={input}
           onChange={(e) => setInput(e.target.value)}
