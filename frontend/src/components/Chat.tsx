@@ -121,7 +121,7 @@ export default function Chat() {
     }
   };
 
-  const createNewSession = async () => {
+  const createNewSession = async (initialMessage: string) => {
     try {
       const csrfToken = localStorage.getItem("csrf_token");
       if (!csrfToken) {
@@ -130,6 +130,11 @@ export default function Chat() {
       }
 
       const response = await chatService.createNewSession();
+
+      const title =
+        initialMessage.length > 0
+          ? initialMessage.substring(0, 10) + "..."
+          : "";
 
       setCurrentSessionId(response.sessionId);
       setCurrentChatId(response.chatId);
