@@ -70,10 +70,8 @@ export default function Chat() {
     
     const handleMessage = (event: MessageEvent) => {
       const isAcceptedOrigin =
-        event.origin === "http://localhost" ||
-        event.origin === "http://localhost:8000" ||
-        event.origin === "https://chat.dev.aubilities.com" ||
-        event.origin === "https://dev.aubilities.com";
+        event.origin === "https://chat.demo.aubilities.com" ||
+        event.origin === "https://demo.aubilities.com";
       if (isAcceptedOrigin) {
         switch (event.data.type) {
           case "CLOSE_CHAT":
@@ -213,7 +211,7 @@ export default function Chat() {
 
       // We don't add the bot message here because it will come via WebSocket
     } catch (error) {
-      console.error("Error enviando mensaje:", error);
+      console.error("Error enviando mensaje: ", error);
       setLoading(false);
 
       const errorMessage: Message = {

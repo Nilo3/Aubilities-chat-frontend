@@ -30,36 +30,53 @@ export class ChatFrontendStack extends Stack {
       originAccessLevels: [AccessLevel.READ],
     });
 
-    // IMPORTAR la distribución existente de CloudFront
-    const distribution = Distribution.fromDistributionAttributes(this, 'ExistingCloudFrontDistribution', {
-      distributionId: 'EA5BBA018FZ2J', // <-- Usa el ID de tu distribución existente
-      domainName: 'd2ditbgi19oah4.cloudfront.net', // <-- Usa el Domain Name estándar de tu distribución existente
-    });
+    const distributionProps: any = {
+      defaultBehavior: {
+        origin: s3Origin,
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+      },
+      defaultRootObject: 'index.html',
+      certificate,
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+        },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+        },
+      ],
+    };
+
+    // Solo agrega domainNames si hay un dominio configurado
+    if (config.domainName) {
+      distributionProps.domainNames = [config.domainName];
+    }
+
+    const distribution = new Distribution(this, 'Distribution', distributionProps);
 
     new BucketDeployment(this, 'DeployWebsite', {
       sources: [Source.asset(join(__dirname, '../frontend/dist'))],
       destinationBucket: websiteBucket,
-      distribution, // Usar la distribución importada
+      distribution,
       distributionPaths: ['/*'],
     });
 
     new CfnOutput(this, 'DistributionDomainName', {
       value: distribution.distributionDomainName,
-      description: 'Use this domain name to update your DNS CNAME record',
     });
 
     new CfnOutput(this, 'CustomDomainName', {
       value: config.domainName,
-      description: 'Target domain name for DNS configuration',
     });
 
     new CfnOutput(this, 'Environment', {
       value: config.environment,
-    });
-
-    new CfnOutput(this, 'DNSInstructions', {
-      value: `After deployment, update your DNS CNAME record for ${config.domainName} to point to ${distribution.distributionDomainName}`,
-      description: 'DNS Configuration Instructions',
     });
   }
 }
