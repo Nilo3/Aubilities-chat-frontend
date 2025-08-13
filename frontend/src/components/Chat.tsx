@@ -240,7 +240,7 @@ export default function Chat() {
   return (
     <div className="h-full w-full flex flex-col bg-white">
       <div className="flex items-center justify-between p-4 bg-[#4361ee] text-white py-5">
-        <h3 className="text-xl font-medium">AI Coach</h3>
+        <h3 className="text-xl font-medium">Aubi-One</h3>
         <div className="flex items-center gap-2">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -285,11 +285,6 @@ export default function Chat() {
                 />
               ))}
             {loading && <TypingIndicator />}
-            {messages.length === 0 && !loading && (
-              <div className="h-full flex items-center justify-center text-gray-500">
-                <p>¡Hola! ¿En qué puedo ayudarte hoy?</p>
-              </div>
-            )}
           </>
         )}
         <div ref={chatEndRef} />

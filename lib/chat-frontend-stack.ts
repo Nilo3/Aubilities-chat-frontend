@@ -18,6 +18,11 @@ export class ChatFrontendStack extends Stack {
 
     const config: EnvironmentConfig = getConfig(props.environment);
 
+    // Validar que el certificado ARN esté configurado
+    if (!config.certificateArn) {
+      throw new Error(`CERTIFICATE_ARN no está configurado para el entorno ${props.environment}`);
+    }
+
     const certificate = Certificate.fromCertificateArn(this, 'Certificate', config.certificateArn);
 
     const websiteBucket = new Bucket(this, 'WebsiteBucket', {
@@ -30,7 +35,8 @@ export class ChatFrontendStack extends Stack {
       originAccessLevels: [AccessLevel.READ],
     });
 
-    const distribution = new Distribution(this, 'Distribution', {
+    // Configuración base de la distribución
+    const distributionConfig: any = {
       defaultBehavior: {
         origin: s3Origin,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -38,8 +44,6 @@ export class ChatFrontendStack extends Stack {
         cachePolicy: CachePolicy.CACHING_OPTIMIZED,
       },
       defaultRootObject: 'index.html',
-      domainNames: [config.domainName],
-      certificate,
       errorResponses: [
         {
           httpStatus: 404,
@@ -52,10 +56,21 @@ export class ChatFrontendStack extends Stack {
           responsePagePath: '/index.html',
         },
       ],
-    });
+    };
+
+    // Solo agregar dominio personalizado si está disponible
+    // Para evitar conflictos de DNS, usar solo el dominio CloudFront por defecto en caso de problemas
+    const useCustomDomain = process.env.USE_CUSTOM_DOMAIN !== 'false';
+    
+    if (useCustomDomain && config.certificateArn) {
+      distributionConfig.domainNames = [config.domainName];
+      distributionConfig.certificate = certificate;
+    }
+
+    const distribution = new Distribution(this, 'Distribution', distributionConfig);
 
     new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(join(__dirname, '../dist'))],
+      sources: [Source.asset(join(__dirname, '../frontend/dist'))],
       destinationBucket: websiteBucket,
       distribution,
       distributionPaths: ['/*'],
@@ -63,14 +78,24 @@ export class ChatFrontendStack extends Stack {
 
     new CfnOutput(this, 'DistributionDomainName', {
       value: distribution.distributionDomainName,
+      description: 'Dominio de CloudFront (siempre disponible)',
     });
 
     new CfnOutput(this, 'CustomDomainName', {
-      value: config.domainName,
+      value: useCustomDomain && config.certificateArn ? config.domainName : 'No configurado',
+      description: 'Dominio personalizado (si está configurado)',
     });
 
     new CfnOutput(this, 'Environment', {
       value: config.environment,
+      description: 'Entorno de despliegue',
+    });
+
+    new CfnOutput(this, 'WebsiteURL', {
+      value: useCustomDomain && config.certificateArn 
+        ? `https://${config.domainName}` 
+        : `https://${distribution.distributionDomainName}`,
+      description: 'URL principal del sitio web',
     });
   }
 }

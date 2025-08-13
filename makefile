@@ -8,7 +8,7 @@ ENV ?= dev
 .DEFAULT_GOAL := help
 
 # PHONY targets
-.PHONY: help build build-frontend build-cdk bootstrap synth deploy doctor diff clean
+.PHONY: help build build-frontend build-cdk bootstrap synth deploy deploy-no-domain doctor diff clean
 
 help: ## Show this help message
 	@echo "Usage: make [target] ENV=[dev|demo|prod]"
@@ -66,6 +66,16 @@ deploy: build ## Deploy CDK stack to specified environment
 	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 	AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 	CERTIFICATE_ARN=$(CERTIFICATE_ARN) \
+	cdk deploy --context env=$(ENV) --require-approval never
+
+deploy-no-domain: build ## Deploy CDK stack without custom domain (useful for DNS conflicts)
+	@echo "Deploying to $(ENV) environment WITHOUT custom domain..."
+	@AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID) \
+	AWS_REGION=$(AWS_REGION) \
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	CERTIFICATE_ARN=$(CERTIFICATE_ARN) \
+	USE_CUSTOM_DOMAIN=false \
 	cdk deploy --context env=$(ENV) --require-approval never
 
 doctor: ## Run CDK doctor for specified environment
